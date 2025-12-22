@@ -1,7 +1,7 @@
 column,missing_count,missing_pct
 order_id,0,0.0
 user_id,0,0.0
-amount,1,0.2
-quantity,1,0.2
-created_at,1,0.2
-status,0,0.0
+amount,495,0.09428571428571429
+quantity,534,0.10171428571428572
+created_at,507,0.09657142857142857
+status,513,0.09771428571428571

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pathlib import Path
 import pandas as pd
 
@@ -25,11 +23,13 @@ def main() -> None:
     # paths
     p = make_paths(ROOT)
 
-    # 1) Load data
+    # load data
     orders = pd.read_parquet(p.processed_dir / "orders_clean.parquet")
     users = pd.read_parquet(p.processed_dir / "users.parquet")
 
-    # 2) Basic checks
+    # --------------------
+    # quality checks
+    # --------------------
     require_columns(
         orders,
         ["order_id", "user_id", "amount", "quantity", "created_at", "status_clean"],
@@ -41,11 +41,11 @@ def main() -> None:
 
     assert_non_empty(orders, "orders_clean")
     assert_non_empty(users, "users")
-
-    # users must be unique
     assert_unique_key(users, "user_id")
 
-    # 3) Normalize join keys (VERY IMPORTANT)
+    # --------------------
+    # FIX user_id mismatch
+    # --------------------
     orders["user_id"] = (
         orders["user_id"]
         .astype("string")
@@ -60,7 +60,9 @@ def main() -> None:
         .str.zfill(4)
     )
 
-    # 4) Parse datetime + add time parts
+    # --------------------
+    # datetime transforms
+    # --------------------
     orders_t = (
         orders
         .pipe(parse_datetime, col="created_at", utc=True)
@@ -70,31 +72,62 @@ def main() -> None:
     n_missing_ts = int(orders_t["created_at"].isna().sum())
     print("missing created_at after parse:", n_missing_ts, "/", len(orders_t))
 
-    # 5) Safe join (orders many -> users one)
+    # --------------------
+    # safe join (orders many -> users one)
+    # --------------------
     joined = safe_left_join(
-        left=orders_t,
-        right=users,
+        orders_t,
+        users,
         on="user_id",
         validate="many_to_one",
         suffixes=("", "_user"),
     )
 
-    # sanity check
-    assert len(joined) == len(orders_t), "Row count changed after join!"
+    # sanity checks
+    assert len(joined) == len(orders_t), "Row count changed (join explosion?)"
 
     match_rate = 1.0 - float(joined["country"].isna().mean())
     print("rows:", len(joined))
     print("country match rate:", round(match_rate, 3))
 
-    # 6) Outliers (winsor + flag)
-    joined = joined.assign(amount_winsor=winsorize(joined["amount"]))
+    # --------------------
+    # outliers
+    # --------------------
+    joined = joined.assign(
+        amount_winsor=winsorize(joined["amount"])
+    )
     joined = add_outlier_flag(joined, "amount", k=1.5)
 
-    # 7) Write analytics table
+    # --------------------
+    # write analytics table
+    # --------------------
     out_path = p.processed_dir / "analytics_table.parquet"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     joined.to_parquet(out_path, index=False)
     print("wrote:", out_path)
+
+    # ==================================================
+    # Task 7 — mini summary table (BONUS)
+    # ==================================================
+    summary = (
+        joined
+        .groupby("country", dropna=False)
+        .agg(
+            revenue=("amount", "sum"),
+            orders_count=("order_id", "count"),
+        )
+        .reset_index()
+        .sort_values("revenue", ascending=False)
+    )
+
+    print("\nRevenue by country:")
+    print(summary.head(10))
+
+    reports_dir = ROOT / "reports"
+    reports_dir.mkdir(exist_ok=True)
+    summary_path = reports_dir / "revenue_by_country.csv"
+    summary.to_csv(summary_path, index=False)
+    print("wrote:", summary_path)
 
 
 if __name__ == "__main__":

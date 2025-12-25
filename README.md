@@ -50,20 +50,20 @@ The notebook is organized into the following sections:
 	-	Confirms data readiness for analysi
 
 4. Questions & Results
-Question 1: Revenue by country
+## Question 1: Revenue by country
 	-	Aggregates:
 	-	Number of orders (n)
 	-	Total revenue
 	-	Average order value (AOV)
 	-	Creates a sorted bar chart
 	-	Exports figure: reports/figures/revenue_by_country.png
-Question 2: Revenue trend (monthly)
+## Question 2: Revenue trend (monthly)
 	-	Aggregates:
 	-   Monthly order count
 	-	Monthly total revenue
 	-	Creates a line chart ordered by month
 	-	Exports figure: reports/figures/revenue_trend_monthly.png
-Question 3: Order amount distribution (winsorized)
+## Question 3: Order amount distribution (winsorized)
 	-	Visualizes the distribution of amount_winsor
 	-	Uses a histogram
 	-   Exports figure: reports/figures/amount_hist_winsor.png

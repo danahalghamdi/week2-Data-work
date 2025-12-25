@@ -2,7 +2,12 @@
 name = "week2-data-work"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["pandas", "pyarrow"]
+dependencies = [
+  "pandas==2.3.3",
+  "pyarrow==22.0.0",
+  "plotly==6.5.0",
+  "kaleido==1.2.0",
+]
 
 [build-system]
 requires = ["hatchling"]

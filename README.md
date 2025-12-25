@@ -16,7 +16,7 @@ Project dependencies are defined in `pyproject.toml`.
 To install all required dependencies, run the following command from the project root:
 
 ```bash
-pip install .
+uv pip install .
 ```
 ## 2. Open the EDA notebook
 ### Run the notebook
